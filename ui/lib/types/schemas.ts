@@ -1791,6 +1791,20 @@ export const mcpClientUpdateSchema = z
 					}),
 				resource_client_id: secretVarSchema.optional(),
 				resource_client_secret: secretVarSchema.optional(),
+				resource_client_auth_method: z.enum(["", "client_secret_basic", "client_secret_post"]).optional(),
+				resource_private_key: secretVarSchema.optional(),
+				resource_key_id: z.string().optional(),
+				resource_signing_algorithm: z.string().optional(),
+				resource_assertion_audience: z
+					.string()
+					.optional()
+					.refine((val) => !val?.trim() || isHTTPSOrLoopbackURL(val.trim()), {
+						message: "Assertion audience must be an https URL (http is allowed only for localhost)",
+					}),
+			})
+			.refine((te) => !(isSecretVarSet(te.resource_client_secret) && isSecretVarSet(te.resource_private_key)), {
+				message: "Use either a client secret or a private key at the upstream server, not both",
+				path: ["resource_private_key"],
 			})
 			.optional(),
 		tls_config: z
